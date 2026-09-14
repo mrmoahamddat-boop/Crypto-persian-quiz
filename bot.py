@@ -352,8 +352,22 @@ def main():
     app.add_handler(CallbackQueryHandler(answer, pattern=r"^ans:\d+$"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
-    print("Bot is running...")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    print("Bot is running on Render webhook...")
+    port = int(os.environ.get("PORT", "10000"))
+    external_url = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/")
+
+    if external_url:
+        app.run_webhook(
+            listen="0.0.0.0",
+            port=port,
+            url_path="telegram-webhook",
+            webhook_url=f"{external_url}/telegram-webhook",
+            allowed_updates=Update.ALL_TYPES,
+            drop_pending_updates=True,
+        )
+    else:
+        # Local fallback: polling mode.
+        app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
